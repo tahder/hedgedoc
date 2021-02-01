@@ -6,7 +6,8 @@
 
 import {
   CreateDateColumn,
-  Entity, ManyToMany,
+  Entity,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -54,7 +55,7 @@ export class User {
   identities: Identity[];
 
   @ManyToMany((_) => Group, (group) => group.members)
-  groups : Group[];
+  groups: Group[];
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
   @OneToMany((_) => HistoryEntry, (historyEntry) => historyEntry.user)

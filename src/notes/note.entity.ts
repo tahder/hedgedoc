@@ -70,9 +70,6 @@ export class Note {
   @JoinTable()
   tags: Tag[];
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
-
   public static create(owner?: User, alias?: string, shortid?: string): Note {
     if (!shortid) {
       shortid = shortIdGenerate();

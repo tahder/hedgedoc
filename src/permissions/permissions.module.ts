@@ -12,10 +12,6 @@ import { NoteUserPermission } from './note-user-permission.entity';
 import { PermissionsService } from './permissions.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([NoteUserPermission, NoteGroupPermission]),
-    LoggerModule,
-  ],
   exports: [PermissionsService],
   providers: [PermissionsService],
 })

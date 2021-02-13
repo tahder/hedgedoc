@@ -1354,7 +1354,7 @@ $('#clipboardModalClear').click(function () {
   $('#clipboardModalContent').html('')
 })
 $('#clipboardModalConfirm').click(function () {
-  var data = $('#clipboardModalContent').html()
+  var data = $('#clipboardModalContent').text()
   if (data) {
     parseToEditor(data)
     $('#clipboardModal').modal('hide')

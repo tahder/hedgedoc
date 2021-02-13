@@ -39,7 +39,7 @@ export class PermissionsService {
     return false;
   }
   isOwner(user: User, note: Note): boolean {
-    this.logger.debug('isOwner: ' + note.owner.id + ': ' + user.id);
+    if (!user) return false;
     return note.owner.id === user.id;
   }
 
@@ -48,6 +48,9 @@ export class PermissionsService {
     note: Note,
     wantEdit: boolean,
   ): boolean {
+    if (!user) {
+      return false;
+    }
     for (const userPermission of note.userPermissions) {
       if (
         userPermission.user.id === user.id &&
@@ -68,10 +71,6 @@ export class PermissionsService {
     const guestsAllowed = false; // (config.guestPermission == "write" || config.guestPermission == "read" && !wantEdit)
     for (const groupPermission of note.groupPermissions) {
       if (groupPermission.canEdit || !wantEdit) {
-        // Handle normal groups
-        for (const member of groupPermission.group.members) {
-          if (member.id === user.id) return true;
-        }
         // Handle special groups
         if (groupPermission.group.special) {
           if (groupPermission.group.name == 'loggedIn') {
@@ -85,6 +84,13 @@ export class PermissionsService {
           ) {
             // TODO: Name of group in which everybody even guests can edit
             return true;
+          }
+        } else {
+          // Handle normal groups
+          if (user) {
+            for (const member of groupPermission.group.members) {
+              if (member.id === user.id) return true;
+            }
           }
         }
       }

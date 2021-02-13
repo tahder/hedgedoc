@@ -58,6 +58,7 @@ export class PermissionsService {
 
   isOwner(user: User, note: Note): boolean {
     if (!user) return false;
+    if (!note.owner) return false;
     return note.owner.id === user.id;
   }
 

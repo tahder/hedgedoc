@@ -72,28 +72,15 @@ export class NotesController {
     @Request() req,
     @Param('noteIdOrAlias') noteIdOrAlias: string,
   ): Promise<NoteDto> {
-    const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
-    if (!this.permissionsService.mayRead(req.user, note)) {
-      throw new UnauthorizedException('Read denied!');
-    }
-    // ToDo: check if user is allowed to view this note
-    try {
-      return this.noteService.toNoteDto(note);
-    } catch (e) {
-      if (e instanceof NotInDBError) {
-        throw new NotFoundException(e.message);
-      }
-      throw e;
-    }
-  }
-
-  @UseGuards(TokenAuthGuard)
-  @Get(':noteIdOrAlias')
-  async getNote(@Request() req, @Param('noteIdOrAlias') noteIdOrAlias: string) {
-    // ToDo: check if user is allowed to view this note
     try {
       const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
+      if (!this.permissionsService.mayRead(req.user, note)) {
+        throw new UnauthorizedException('Read denied!');
+      }
       await this.historyService.createOrUpdateHistoryEntry(note, req.user);
+      return this.noteService.toNoteDto(note);
+      // ToDo: check if user is allowed to view this note
+
       return this.noteService.toNoteDto(note);
     } catch (e) {
       if (e instanceof NotInDBError) {
@@ -125,7 +112,6 @@ export class NotesController {
     @Request() req,
     @Param('noteIdOrAlias') noteIdOrAlias: string,
   ): Promise<void> {
-    // ToDo: check if user is allowed to delete this note
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.isOwner(req.user, note)) {
       throw new UnauthorizedException('Delete denied!');
@@ -150,7 +136,6 @@ export class NotesController {
     @Param('noteIdOrAlias') noteIdOrAlias: string,
     @MarkdownBody() text: string,
   ): Promise<NoteDto> {
-    // ToDo: check if user is allowed to change this note
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.mayWrite(req.user, note)) {
       throw new UnauthorizedException('Update denied!');
@@ -218,7 +203,6 @@ export class NotesController {
     @Param('noteIdOrAlias') noteIdOrAlias: string,
     @Body() updateDto: NotePermissionsUpdateDto,
   ): Promise<NotePermissionsDto> {
-    // ToDo: check if user is allowed to view this notes permissions
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.isOwner(req.user, note)) {
       throw new UnauthorizedException('Update denied!');

@@ -22,6 +22,8 @@ import { NotesController } from './notes.controller';
 import { PermissionsModule } from '../../../permissions/permissions.module';
 import { HistoryModule } from '../../../history/history.module';
 import { HistoryEntry } from '../../../history/history-entry.entity';
+import { NoteGroupPermission } from '../../../permissions/note-group-permission.entity';
+import { NoteUserPermission } from '../../../permissions/note-user-permission.entity';
 
 describe('Notes Controller', () => {
   let controller: NotesController;
@@ -46,7 +48,7 @@ describe('Notes Controller', () => {
         LoggerModule,
         RevisionsModule,
         PermissionsModule,
-        HistoryModule
+        HistoryModule,
       ],
     })
       .overrideProvider(getRepositoryToken(Note))
@@ -68,6 +70,10 @@ describe('Notes Controller', () => {
       .overrideProvider(getRepositoryToken(Tag))
       .useValue({})
       .overrideProvider(getRepositoryToken(HistoryEntry))
+      .useValue({})
+      .overrideProvider(getRepositoryToken(NoteGroupPermission))
+      .useValue({})
+      .overrideProvider(getRepositoryToken(NoteUserPermission))
       .useValue({})
       .compile();
 

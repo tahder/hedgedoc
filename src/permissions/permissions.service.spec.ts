@@ -30,6 +30,7 @@ jest.mock('../users/user.entity.ts');
 
 describe('PermissionsService', () => {
   let permissionsService: PermissionsService;
+
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [PermissionsService],
@@ -59,220 +60,15 @@ describe('PermissionsService', () => {
     permissionsService = module.get<PermissionsService>(PermissionsService);
   });
 
-  class NoteGroupPermissionWithResultForUser {
-    permissions: NoteGroupPermission[];
-    allowsRead: boolean;
-    allowsWrite: boolean;
-  }
+  // The two users we test with:
+  const user2 = {} as User;
+  user2.id = '2';
+  const user1 = {} as User;
+  user1.id = '1';
 
-  function createGroups(): { [id: string]: Group } {
-    const user1 = {} as User;
-    user1.id = '1';
-
-    const user2 = {} as User;
-    user2.id = '2';
-    const result: { [id: string]: Group } = {};
-
-    const everybody: Group = new Group();
-    everybody.special = true;
-    everybody.name = 'everybody';
-    result['everybody'] = everybody;
-
-    const loggedIn = new Group();
-    loggedIn.special = true;
-    loggedIn.name = 'loggedIn';
-    result['loggedIn'] = loggedIn;
-
-    const user1group = new Group();
-    user1group.name = 'user1group';
-    user1group.members = [user1];
-    result['user1group'] = user1group;
-
-    const user2group = new Group();
-    user2group.name = 'user2group';
-    user2group.members = [user2];
-    result['user2group'] = user2group;
-
-    const user1and2group = new Group();
-    user1and2group.name = 'user1and2group';
-    user1and2group.members = [user1, user2];
-    result['user1and2group'] = user1and2group;
-
-    const user2and1group = new Group();
-    user2and1group.name = 'user2and1group';
-    user2and1group.members = [user2, user1];
-    result['user2and1group'] = user2and1group;
-
-    return result;
-  }
-
-  function createNoteGroupPermissions(): NoteGroupPermission[][] {
-    const groups = createGroups();
-
-    function createNoteGroupPermission(
-      group: Group,
-      write: boolean,
-    ): NoteGroupPermission {
-      const noteGroupPermission = new NoteGroupPermission();
-      noteGroupPermission.canEdit = write;
-      noteGroupPermission.group = group;
-      return noteGroupPermission;
-    }
-
-    const everybodyRead = createNoteGroupPermission(groups['everybody'], false);
-    const everybodyWrite = createNoteGroupPermission(groups['everybody'], true);
-
-    const loggedInRead = createNoteGroupPermission(groups['loggedIn'], false);
-    const loggedInWrite = createNoteGroupPermission(groups['loggedIn'], true);
-
-    const user1groupRead = createNoteGroupPermission(
-      groups['user1group'],
-      false,
-    );
-    const user1groupWrite = createNoteGroupPermission(
-      groups['user1group'],
-      true,
-    );
-
-    const user2groupRead = createNoteGroupPermission(
-      groups['user2group'],
-      false,
-    );
-    const user2groupWrite = createNoteGroupPermission(
-      groups['user2group'],
-      true,
-    );
-
-    const user1and2groupRead = createNoteGroupPermission(
-      groups['user1and2group'],
-      false,
-    );
-    const user1and2groupWrite = createNoteGroupPermission(
-      groups['user1and2group'],
-      true,
-    );
-
-    const user2and1groupRead = createNoteGroupPermission(
-      groups['user2and1group'],
-      false,
-    );
-    const user2and1groupWrite = createNoteGroupPermission(
-      groups['user2and1group'],
-      true,
-    );
-
-    return [
-      [user1groupRead, user1and2groupRead, user2and1groupRead, null],
-      [user2and1groupWrite, user1and2groupWrite, user1groupWrite, null],
-      [everybodyRead, everybodyWrite, null],
-      [loggedInRead, loggedInWrite, null],
-      [user2groupWrite, user2groupRead, null],
-    ];
-  }
-
-  function createNoteGroupPermissionsCombinations(
-    guestPermission: GuestPermission,
-  ): NoteGroupPermissionWithResultForUser[] {
-    // for logged in users
-    const noteGroupPermissions = createNoteGroupPermissions();
-    const result: NoteGroupPermissionWithResultForUser[] = [];
-    for (const group0 of noteGroupPermissions[0]) {
-      for (const group1 of noteGroupPermissions[1]) {
-        for (const group2 of noteGroupPermissions[2]) {
-          for (const group3 of noteGroupPermissions[3]) {
-            for (const group4 of noteGroupPermissions[4]) {
-              const insert = [];
-              let readPermission = false;
-              let writePermission = false;
-              if (group0) {
-                // user1 in ReadGroups
-                readPermission = true;
-                insert.push(group0);
-              }
-              if (group1) {
-                // user1 in WriteGroups
-                readPermission = true;
-                writePermission = true;
-                insert.push(group1);
-              }
-
-              if (group2) {
-                // everybody group TODO config options
-                switch (guestPermission) {
-                  case GuestPermission.CREATE_ALIAS:
-                  case GuestPermission.CREATE:
-                  case GuestPermission.WRITE:
-                    writePermission = writePermission || group2.canEdit;
-                    readPermission = true;
-                    break;
-                  case GuestPermission.READ:
-                    readPermission = true;
-                }
-                insert.push(group2);
-              }
-              if (group3) {
-                // loggedIn users
-                readPermission = true;
-                writePermission = writePermission || group3.canEdit;
-                insert.push(group3);
-              }
-              if (group4) {
-                // user not in group
-                insert.push(group4);
-              }
-              result.push({
-                permissions: insert,
-                allowsRead: readPermission,
-                allowsWrite: writePermission,
-              });
-            }
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  // https://stackoverflow.com/questions/9960908/permutations-in-javascript
-  function permutator(
-    inputArr: NoteGroupPermission[],
-  ): NoteGroupPermission[][] {
-    const results = [];
-
-    function permute(arr, memo) {
-      let cur;
-
-      for (let i = 0; i < arr.length; i++) {
-        cur = arr.splice(i, 1);
-        if (arr.length === 0) {
-          results.push(memo.concat(cur));
-        }
-        permute(arr.slice(), memo.concat(cur));
-        arr.splice(i, 0, cur[0]);
-      }
-
-      return results;
-    }
-
-    return permute(inputArr, []);
-  }
-
-  function permutateNoteGroupPermissions(
-    noteGroupPermissions: NoteGroupPermissionWithResultForUser[],
-  ): NoteGroupPermissionWithResultForUser[] {
-    const result: NoteGroupPermissionWithResultForUser[] = [];
-    for (const permission of noteGroupPermissions) {
-      const permutations = permutator(permission.permissions);
-      for (const permutation of permutations) {
-        result.push({
-          permissions: permutation,
-          allowsRead: permission.allowsRead,
-          allowsWrite: permission.allowsWrite,
-        });
-      }
-    }
-    return result;
-  }
+  it('should be defined', () => {
+    expect(permissionsService).toBeDefined();
+  });
 
   function createNote(owner: User): Note {
     const note = {} as Note;
@@ -281,11 +77,11 @@ describe('PermissionsService', () => {
     note.owner = owner;
     return note;
   }
-  const user2 = {} as User;
-  user2.id = '2';
-  const user1 = {} as User;
-  user1.id = '1';
-  function createUserNotePermissionNotes(): Note[] {
+
+  /*
+   * Creates the permission objects for UserPermission for two users with write and with out write permission
+   */
+  function createNoteUserPermissionNotes(): Note[] {
     const note0 = createNote(user1);
     const note1 = createNote(user2);
     const note2 = createNote(user2);
@@ -355,10 +151,7 @@ describe('PermissionsService', () => {
       noteEverybodyWrite,
     ];
   }
-  const notes = createUserNotePermissionNotes();
-  it('should be defined', () => {
-    expect(permissionsService).toBeDefined();
-  });
+  const notes = createNoteUserPermissionNotes();
 
   describe('mayRead works with', () => {
     it('Owner', () => {
@@ -438,15 +231,239 @@ describe('PermissionsService', () => {
     });
   });
 
+  /*
+   * Helper Object that arranges a list of GroupPermissions and if they allow a user to read or write a particular note.
+   */
+  class NoteGroupPermissionWithResultForUser {
+    permissions: NoteGroupPermission[];
+    allowsRead: boolean;
+    allowsWrite: boolean;
+  }
+
+  /*
+   * Setup function to create all the groups we use in the tests.
+   */
+  function createGroups(): { [id: string]: Group } {
+    const result: { [id: string]: Group } = {};
+
+    const everybody: Group = new Group();
+    everybody.special = true;
+    everybody.name = 'everybody';
+    result['everybody'] = everybody;
+
+    const loggedIn = new Group();
+    loggedIn.special = true;
+    loggedIn.name = 'loggedIn';
+    result['loggedIn'] = loggedIn;
+
+    const user1group = new Group();
+    user1group.name = 'user1group';
+    user1group.members = [user1];
+    result['user1group'] = user1group;
+
+    const user2group = new Group();
+    user2group.name = 'user2group';
+    user2group.members = [user2];
+    result['user2group'] = user2group;
+
+    const user1and2group = new Group();
+    user1and2group.name = 'user1and2group';
+    user1and2group.members = [user1, user2];
+    result['user1and2group'] = user1and2group;
+
+    const user2and1group = new Group();
+    user2and1group.name = 'user2and1group';
+    user2and1group.members = [user2, user1];
+    result['user2and1group'] = user2and1group;
+
+    return result;
+  }
+
+  /*
+   * Create all GroupPermissions: For each group two GroupPermissions are created one with read permission and one with write permission.
+   */
+  function createAllNoteGroupPermissions(): NoteGroupPermission[][] {
+    const groups = createGroups();
+
+    /*
+     * Helper function for creating GroupPermissions
+     */
+    function createNoteGroupPermission(
+      group: Group,
+      write: boolean,
+    ): NoteGroupPermission {
+      const noteGroupPermission = new NoteGroupPermission();
+      noteGroupPermission.canEdit = write;
+      noteGroupPermission.group = group;
+      return noteGroupPermission;
+    }
+
+    const everybodyRead = createNoteGroupPermission(groups['everybody'], false);
+    const everybodyWrite = createNoteGroupPermission(groups['everybody'], true);
+
+    const loggedInRead = createNoteGroupPermission(groups['loggedIn'], false);
+    const loggedInWrite = createNoteGroupPermission(groups['loggedIn'], true);
+
+    const user1groupRead = createNoteGroupPermission(
+      groups['user1group'],
+      false,
+    );
+    const user1groupWrite = createNoteGroupPermission(
+      groups['user1group'],
+      true,
+    );
+
+    const user2groupRead = createNoteGroupPermission(
+      groups['user2group'],
+      false,
+    );
+    const user2groupWrite = createNoteGroupPermission(
+      groups['user2group'],
+      true,
+    );
+
+    const user1and2groupRead = createNoteGroupPermission(
+      groups['user1and2group'],
+      false,
+    );
+    const user1and2groupWrite = createNoteGroupPermission(
+      groups['user1and2group'],
+      true,
+    );
+
+    const user2and1groupRead = createNoteGroupPermission(
+      groups['user2and1group'],
+      false,
+    );
+    const user2and1groupWrite = createNoteGroupPermission(
+      groups['user2and1group'],
+      true,
+    );
+
+    return [
+      [user1groupRead, user1and2groupRead, user2and1groupRead, null], // group0: allow user1 to read via group
+      [user2and1groupWrite, user1and2groupWrite, user1groupWrite, null], // group1: allow user1 to write via group
+      [everybodyRead, everybodyWrite, null], // group2: permissions of the special group everybody
+      [loggedInRead, loggedInWrite, null], // group3: permissions of the special group loggedIn
+      [user2groupWrite, user2groupRead, null], // group4: don't allow user1 to read or write via group
+    ];
+  }
+  /*
+   * creates the matrix multiplication of group0 to group4 of createAllNoteGroupPermissions
+   */
+  function createNoteGroupPermissionsCombinations(
+    guestPermission: GuestPermission,
+  ): NoteGroupPermissionWithResultForUser[] {
+    // for logged in users
+    const noteGroupPermissions = createAllNoteGroupPermissions();
+    const result: NoteGroupPermissionWithResultForUser[] = [];
+    for (const group0 of noteGroupPermissions[0]) {
+      for (const group1 of noteGroupPermissions[1]) {
+        for (const group2 of noteGroupPermissions[2]) {
+          for (const group3 of noteGroupPermissions[3]) {
+            for (const group4 of noteGroupPermissions[4]) {
+              const insert = [];
+              let readPermission = false;
+              let writePermission = false;
+              if (group0 !== null) {
+                // user1 in ReadGroups
+                readPermission = true;
+                insert.push(group0);
+              }
+              if (group1 !== null) {
+                // user1 in WriteGroups
+                readPermission = true;
+                writePermission = true;
+                insert.push(group1);
+              }
+
+              if (group2 !== null) {
+                // everybody group TODO config options
+                switch (guestPermission) {
+                  case GuestPermission.CREATE_ALIAS:
+                  case GuestPermission.CREATE:
+                  case GuestPermission.WRITE:
+                    writePermission = writePermission || group2.canEdit;
+                    readPermission = true;
+                    break;
+                  case GuestPermission.READ:
+                    readPermission = true;
+                }
+                insert.push(group2);
+              }
+              if (group3 !== null) {
+                // loggedIn users
+                readPermission = true;
+                writePermission = writePermission || group3.canEdit;
+                insert.push(group3);
+              }
+              if (group4 !== null) {
+                // user not in group
+                insert.push(group4);
+              }
+              result.push({
+                permissions: insert,
+                allowsRead: readPermission,
+                allowsWrite: writePermission,
+              });
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  // inspired by https://stackoverflow.com/questions/9960908/permutations-in-javascript
+  function permutator(
+    inputArr: NoteGroupPermission[],
+  ): NoteGroupPermission[][] {
+    const results = [];
+
+    function permute(arr, memo) {
+      let cur;
+
+      for (let i = 0; i < arr.length; i++) {
+        cur = arr.splice(i, 1);
+        if (arr.length === 0) {
+          results.push(memo.concat(cur));
+        }
+        permute(arr.slice(), memo.concat(cur));
+        arr.splice(i, 0, cur[0]);
+      }
+
+      return results;
+    }
+
+    return permute(inputArr, []);
+  }
+
+  // takes each set of permissions from createNoteGroupPermissionsCombinations, permute them and add them to the list
+  function permuteNoteGroupPermissions(
+    noteGroupPermissions: NoteGroupPermissionWithResultForUser[],
+  ): NoteGroupPermissionWithResultForUser[] {
+    const result: NoteGroupPermissionWithResultForUser[] = [];
+    for (const permission of noteGroupPermissions) {
+      const permutations = permutator(permission.permissions);
+      for (const permutation of permutations) {
+        result.push({
+          permissions: permutation,
+          allowsRead: permission.allowsRead,
+          allowsWrite: permission.allowsWrite,
+        });
+      }
+    }
+    return result;
+  }
+
   describe('check if groups work with', () => {
     const guestPermission = GuestPermission.WRITE;
     const rawPermissions = createNoteGroupPermissionsCombinations(
       guestPermission,
     );
-    const permissions = permutateNoteGroupPermissions(rawPermissions);
+    const permissions = permuteNoteGroupPermissions(rawPermissions);
     let i = 0;
     for (const permission of permissions) {
-      // TODO change here for full tests
       const note = createNote(user2);
       note.groupPermissions = permission.permissions;
       let permissionString = '';

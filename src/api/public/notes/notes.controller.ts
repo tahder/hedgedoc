@@ -58,7 +58,7 @@ export class NotesController {
   ): Promise<NoteDto> {
     // ToDo: provide user for createNoteDto
     if (!this.permissionsService.mayCreate(req.user)) {
-      throw new UnauthorizedException('Creation denied!');
+      throw new UnauthorizedException('Creating note denied!');
     }
     this.logger.debug('Got raw markdown:\n' + text);
     return this.noteService.toNoteDto(
@@ -75,7 +75,7 @@ export class NotesController {
     try {
       const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
       if (!this.permissionsService.mayRead(req.user, note)) {
-        throw new UnauthorizedException('Read denied!');
+        throw new UnauthorizedException('Reading note denied!');
       }
       await this.historyService.createOrUpdateHistoryEntry(note, req.user);
       return this.noteService.toNoteDto(note);
@@ -98,7 +98,7 @@ export class NotesController {
     @MarkdownBody() text: string,
   ): Promise<NoteDto> {
     if (!this.permissionsService.mayCreate(req.user)) {
-      throw new UnauthorizedException('Create denied!');
+      throw new UnauthorizedException('Creating note denied!');
     }
     this.logger.debug('Got raw markdown:\n' + text, 'createNamedNote');
     return this.noteService.toNoteDto(
@@ -114,7 +114,7 @@ export class NotesController {
   ): Promise<void> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.isOwner(req.user, note)) {
-      throw new UnauthorizedException('Delete denied!');
+      throw new UnauthorizedException('Deleting note denied!');
     }
     this.logger.debug('Deleting note: ' + noteIdOrAlias, 'deleteNote');
     try {
@@ -138,7 +138,7 @@ export class NotesController {
   ): Promise<NoteDto> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.mayWrite(req.user, note)) {
-      throw new UnauthorizedException('Update denied!');
+      throw new UnauthorizedException('Updating note denied!');
     }
     this.logger.debug('Got raw markdown:\n' + text, 'updateNote');
     try {
@@ -162,7 +162,7 @@ export class NotesController {
   ): Promise<string> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.mayRead(req.user, note)) {
-      throw new UnauthorizedException('Read denied!');
+      throw new UnauthorizedException('Reading note denied!');
     }
     try {
       return await this.noteService.getNoteContent(noteIdOrAlias);
@@ -182,7 +182,7 @@ export class NotesController {
   ): Promise<NoteMetadataDto> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.mayRead(req.user, note)) {
-      throw new UnauthorizedException('Read denied!');
+      throw new UnauthorizedException('Reading note denied!');
     }
     try {
       return this.noteService.toNoteMetadataDto(
@@ -205,7 +205,7 @@ export class NotesController {
   ): Promise<NotePermissionsDto> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.isOwner(req.user, note)) {
-      throw new UnauthorizedException('Update denied!');
+      throw new UnauthorizedException('Updating note denied!');
     }
     try {
       return this.noteService.toNotePermissionsDto(
@@ -227,7 +227,7 @@ export class NotesController {
   ): Promise<RevisionMetadataDto[]> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.mayRead(req.user, note)) {
-      throw new UnauthorizedException('Raec denied!');
+      throw new UnauthorizedException('Reading note denied!');
     }
     try {
       const revisions = await this.revisionsService.getAllRevisions(
@@ -255,7 +255,7 @@ export class NotesController {
   ): Promise<RevisionDto> {
     const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     if (!this.permissionsService.mayRead(req.user, note)) {
-      throw new UnauthorizedException('Read denied!');
+      throw new UnauthorizedException('Reading note denied!');
     }
     try {
       return this.revisionsService.toRevisionDto(

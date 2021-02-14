@@ -35,6 +35,7 @@ import { NoteMetadataDto } from '../../../notes/note-metadata.dto';
 import { RevisionMetadataDto } from '../../../revisions/revision-metadata.dto';
 import { RevisionDto } from '../../../revisions/revision.dto';
 import { PermissionsService } from '../../../permissions/permissions.service';
+import { Note } from '../../../notes/note.entity';
 
 @ApiTags('notes')
 @ApiSecurity('token')
@@ -72,18 +73,20 @@ export class NotesController {
     @Request() req,
     @Param('noteIdOrAlias') noteIdOrAlias: string,
   ): Promise<NoteDto> {
+    let note: Note;
     try {
-      const note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
-      if (!this.permissionsService.mayRead(req.user, note)) {
-        throw new UnauthorizedException('Reading note denied!');
-      }
-      await this.historyService.createOrUpdateHistoryEntry(note, req.user);
+      note = await this.noteService.getNoteByIdOrAlias(noteIdOrAlias);
     } catch (e) {
       if (e instanceof NotInDBError) {
         throw new NotFoundException(e.message);
       }
       throw e;
     }
+    if (!this.permissionsService.mayRead(req.user, note)) {
+      throw new UnauthorizedException('Reading note denied!');
+    }
+    await this.historyService.createOrUpdateHistoryEntry(note, req.user);
+    return this.noteService.toNoteDto(note);
   }
 
   @UseGuards(TokenAuthGuard)

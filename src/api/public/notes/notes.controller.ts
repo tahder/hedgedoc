@@ -78,10 +78,6 @@ export class NotesController {
         throw new UnauthorizedException('Reading note denied!');
       }
       await this.historyService.createOrUpdateHistoryEntry(note, req.user);
-      return this.noteService.toNoteDto(note);
-      // ToDo: check if user is allowed to view this note
-
-      return this.noteService.toNoteDto(note);
     } catch (e) {
       if (e instanceof NotInDBError) {
         throw new NotFoundException(e.message);

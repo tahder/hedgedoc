@@ -18,7 +18,7 @@ export enum GuestPermission {
 
 @Injectable()
 export class PermissionsService {
-  public guestPermission: GuestPermission; // TODO cange to configOption
+  public guestPermission: GuestPermission; // TODO change to configOption
   mayRead(user: User, note: Note): boolean {
     if (this.isOwner(user, note)) return true;
 

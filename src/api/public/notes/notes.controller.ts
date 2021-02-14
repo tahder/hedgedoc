@@ -62,7 +62,7 @@ export class NotesController {
     }
     this.logger.debug('Got raw markdown:\n' + text);
     return this.noteService.toNoteDto(
-      await this.noteService.createNote(text, '', req.user),
+      await this.noteService.createNote(text, undefined, req.user),
     );
   }
 

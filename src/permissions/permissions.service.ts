@@ -8,6 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { User } from '../users/user.entity';
 import { Note } from '../notes/note.entity';
 
+// TODO move to config or remove
 export enum GuestPermission {
   DENY = 'deny',
   READ = 'read',
